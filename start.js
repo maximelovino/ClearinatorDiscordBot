@@ -1,4 +1,5 @@
-const discord = require('discord.io');
+//Doc for the lib: https://discord.js.org/#/docs/main/stable/general/welcome
+const discord = require('discord.js');
 const log = require('winston');
 require('dotenv').config({ path: 'keys.env' });
 const token = process.env.BOT_TOKEN;
@@ -10,52 +11,32 @@ log.add(log.transports.Console, {
 });
 log.level = 'debug';
 
-const bot = new discord.Client({
-	token,
-	autorun: true,
-});
+const bot = new discord.Client();
 
-bot.on('ready', (event) => {
+
+bot.on('ready', () => {
 	log.info('Connected');
-	log.info('Logged in as: ');
-	log.info(bot.username + ' - (' + bot.id + ')');
 });
 
-bot.on('message', (user, userID, channelID, message, event) => {
-	if (userID !== bot.id) {
-		if (message.match('.*(C|c)learinator.*')) {
-			log.info(`${message} matches`);
-			bot.sendMessage({
-				to: channelID,
-				message: "On parle de moi?"
-			});
-		} else if (message === '$clear') {
-			log.info("Clearing all messages");
-			clearAllChannelMessages(channelID);
-		} else {
-			log.info(`${message} doesn't match`);
-		}
+bot.on('message', (message) => {
+	log.info(`${message.author.username} - ${message.content}`);
+	if (message.content === "$clear") {
+		message.channel.fetchMessages({ limit: 100 }).then(messages => {
+			deleteAllNotPinned(messages);
+		}).catch(e => log.error(e));
 	}
-});
+})
 
-function clearAllChannelMessages(channelID) {
-	bot.getMessages({
-		channelID,
-		limit: 100,
-	}, (error, messages) => {
+bot.login(token);
 
-		const notPinned = messages.filter(m => !m.pinned);
-		log.info(`${notPinned.length} out of ${messages.length}`);
+function deleteAllNotPinned(messagesCollection) {
+	const messages = Array.from(messagesCollection.values());
+	const notPinned = messages.filter(m => !m.pinned);
+	log.info(`Deleting ${notPinned.length} out of ${messages.length}`);
 
-		const idsToDel = notPinned.map(m => m.id);
-		if (idsToDel.length != 0) {
-			bot.deleteMessages({
-				channelID,
-				messageIDs: idsToDel,
-			}, (error, response) => {
-				log.error(error);
-				log.info(response);
-			});
-		}
+	notPinned.forEach(message => {
+		message.delete()
+			.then(msg => log.info(`Deleted message: ${msg.content}`))
+			.catch(console.error);
 	});
 }
