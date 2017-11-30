@@ -29,8 +29,33 @@ bot.on('message', (user, userID, channelID, message, event) => {
 				to: channelID,
 				message: "On parle de moi?"
 			});
+		} else if (message === '$clear') {
+			log.info("Clearing all messages");
+			clearAllChannelMessages(channelID);
 		} else {
 			log.info(`${message} doesn't match`);
 		}
 	}
 });
+
+function clearAllChannelMessages(channelID) {
+	bot.getMessages({
+		channelID,
+		limit: 100,
+	}, (error, messages) => {
+
+		const notPinned = messages.filter(m => !m.pinned);
+		log.info(`${notPinned.length} out of ${messages.length}`);
+
+		const idsToDel = notPinned.map(m => m.id);
+		if (idsToDel.length != 0) {
+			bot.deleteMessages({
+				channelID,
+				messageIDs: idsToDel,
+			}, (error, response) => {
+				log.error(error);
+				log.info(response);
+			});
+		}
+	});
+}
