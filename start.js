@@ -22,7 +22,7 @@ bot.on('ready', () => {
 bot.on('message', (message) => {
 	log.info(`${message.author.username} - ${message.content}`);
 	let result;
-	const canClear = message.member.permissions.has("MANAGE_MESSAGES");
+	const canClear = message.member.permissions.has(discord.Permissions.FLAGS.MANAGE_MESSAGES);
 	//add word bound with \b before di... group
 	const mancheRegEx = new RegExp('(?:.*)\\b(?:di(?:(?:s|t)[\\s-])?)(.*)', 'gi');
 	if (message.content === "$clear" && canClear) {
