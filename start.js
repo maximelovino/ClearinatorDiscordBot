@@ -21,6 +21,10 @@ bot.on('ready', () => {
 
 bot.on('message', (message) => {
 	log.info(`${message.author.username} - ${message.content}`);
+	if (message.author == bot.user) {
+		log.info("Message from myself, ignoring");
+		return;
+	}
 	let result;
 	const canClear = message.member.permissions.has(discord.Permissions.FLAGS.MANAGE_MESSAGES);
 	//add word bound with \b before di... group
