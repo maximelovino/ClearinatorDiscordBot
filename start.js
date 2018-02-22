@@ -29,25 +29,48 @@ bot.on('message', (message) => {
 	const canClear = message.member.permissions.has(discord.Permissions.FLAGS.MANAGE_MESSAGES);
 	//add word bound with \b before di... group
 	const mancheRegEx = new RegExp('(?:.*)\\b(?:di(?:(?:s|t)[\\s-])?)(.*)', 'gi');
-	if (message.content === "$clear" && canClear) {
+	const content = message.content.trim();
+
+	if (content === "$clear" && canClear) {
 		message.channel.fetchMessages({ limit: 100 }).then(messages => {
 			deleteAllNotPinned(messages);
 		}).catch(e => log.error(e));
-	} else if ((result = mancheRegEx.exec(message.content)) != null && mancheMode) {
+	} else if ((result = mancheRegEx.exec(content)) != null && mancheMode) {
 		log.info(`Matched message, gonna write ${result[1]}`);
 		message.channel.send(result[1].trim());
-	} else if (message.content === "$mancheMode") {
+	} else if (content === "$mancheMode") {
 		if (mancheMode) {
 			message.channel.send("Deactivating MANCHE mode");
 		} else {
 			message.channel.send("Activating MANCHE mode");
 		}
 		mancheMode = !mancheMode;
+	} else if (content.startsWith("$notify")) {
+		//TODO Don't notify the one who wrote, or the bot
+		if (content === "$notify") {
+			log.info("Notify with no timebase");
+		} else {
+			const timeString = content.split(" ")[1];
+			const timeRegExp = new RegExp('([1-9][0-9]*)([h|m])', 'gi');
+			result = timeRegExp.exec(timeString);
+			if (result) {
+				const timeValue = parseInt(result[1]);
+				const timeUnit = result[2];
+				log.info(`Notify with time`);
+				log.info(`Value ${timeValue}, Unit ${timeUnit}`);
+				constructMentionString(message.channel, message.author, timeValue, timeUnit);
+			}
+		}
 	}
+	//TODO add $help
 	log.info(canClear);
 });
 
 bot.login(token);
+
+function constructMentionString(channel, sender, timeValue, timeUnit) {
+
+}
 
 function deleteAllNotPinned(messagesCollection) {
 	const messages = Array.from(messagesCollection.values());
